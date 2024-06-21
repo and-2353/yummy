@@ -3,14 +3,42 @@
     ツイートする
   </div>
   <div class="card-body">
-    <%= form_with model: @tweet do |f| %>
+    <%= form_with model: @tweet, local: true do |f| %>
       <div class="tweet-body">
         <%= image_tag current_user.profile_photo, class: "avatar avatar-size32" %>
-        <%= f.text_area :text, placeholder: "あなたを悩ませているものはなんでしょう？", class: "form-control", rows: "3" %>
+        <%= f.text_area :text, placeholder: "あなたを悩ませているものはなんでしょう？", class: "form-control", rows: "3", id: "tweet_text" %>
       </div>
       <div class="buttons">
-        <%= f.submit "ツイート", class: "btn btn-primary tweet-btn" %>
+        <span id="sentiment_score" style="margin-right: 10px;">評価: 0</span>
+        <%= f.submit "ツイート", class: "btn btn-primary tweet-btn", id: "tweet_submit" %>
       </div>
     <% end %>
   </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const tweetText = document.getElementById("tweet_text");
+    const sentimentScore = document.getElementById("sentiment_score");
+    const tweetSubmit = document.getElementById("tweet_submit");
+
+    tweetText.addEventListener("input", function() {
+      const text = tweetText.value;
+
+      // AJAXリクエストで感情分析を行う
+      fetch('/tweets/sentiment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ text: text })
+      })
+      .then(response => response.json())
+      .then(data => {
+        sentimentScore.textContent = `評価: ${data.score}`;
+        tweetSubmit.disabled = data.score < 0;
+      });
+    });
+  });
+</script>

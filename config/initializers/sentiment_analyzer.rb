@@ -1,0 +1,1 @@
+require 'sentiment_analyzer'
